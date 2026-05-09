@@ -1,19 +1,19 @@
 # Graph Program
 
 ## How to run
-1. Compile: 
+### Compile: 
+'''bash
+javac -cp "./lib/*" -d bin src/*.java src/domain/*.java
 '''
-javac -cp "./lib/*" -d bin src/*.java 
-'''
-2. Execute:
-'''
+### Execute:
+'''bash
 java -cp "bin:./lib/*" Main
 '''
-3. Script (Compile and Execute the program):
-'''
+### Script (Compile and Execute the program):
+'''bash
 bash run.sh
 '''
-NOTE: Run this comands on the root of the proyect
+*NOTE:* Run this comands on the root of the proyect
 
 ## Dependencies
 - flatlaf 3.7.1

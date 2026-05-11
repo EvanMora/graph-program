@@ -1,20 +1,24 @@
-//dark falt 
-import com.formdev.flatlaf.FlatDarkLaf;
+//swing 
 import javax.swing.*;
+//utilidades
+import javax.swing.SwingUtilities;
+//flat
+import com.formdev.flatlaf.FlatDarkLaf;
+//main
 public class Main {
-public static void main(String[] args) {
-    try {
-        UIManager.setLookAndFeel(new FlatDarkLaf());
-        } 
-        catch (Exception e) {
-        System.out.println("No se pudo cargar FlatLaf");
-        }
-        JFrame frame = new JFrame("Prueba FlatLaf");
-        frame.setSize(400, 300);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        JButton button = new JButton("Hello world");
-        frame.add(button);
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
+    public static void main(String[] args){
+        //setup de flat 
+    FlatDarkLaf.setup();
+        //try catch 
+    try{
+        //manager
+    UIManager.setLookAndFeel(new FlatDarkLaf());
     }
- }
+        //stacktracker para ver el error si falla 
+    catch (Exception e) {
+    e.printStackTrace(); 
+    }   
+        //invoca mas tarde la ventana principal 
+    SwingUtilities.invokeLater(VentanaPrincipal::new);
+     } 
+}

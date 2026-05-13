@@ -3,9 +3,9 @@ package domain;
 import javax.management.BadAttributeValueExpException;
 
 public class Graph {
-    private String[] verteces;
+    private Node[] verteces;
     // Save the weight of the connections
-    private int[][] connections; 
+    private Edge[][] connections; 
 
     /**
      * Creates a graph without connections just 
@@ -13,13 +13,13 @@ public class Graph {
      * 
      * @param verteces An array of the verteces names
      */
-    public Graph(String[] verteces) {
+    public Graph(Node[] verteces) {
         this.verteces = verteces;
-        this.connections = new int[verteces.length][verteces.length];
+        this.connections = new Edge[verteces.length][verteces.length];
     }
 
     /* Get the list of verteces */
-    public String[] getVerteces() {
+    public Node[] getVerteces() {
         return verteces;
     }
 
@@ -31,7 +31,7 @@ public class Graph {
      * @param vertex2
      * @return The weight of the connection
      */
-    public int getWeight(String vertex1, String vertex2) throws VertexNotFound{
+    public double getWeight(Node vertex1, Node vertex2){
         int vertex1Index = - 1;
         int vertex2Index = - 1;
         for (int i = 0; i < verteces.length; i++) {
@@ -42,14 +42,14 @@ public class Graph {
                 vertex2Index = i;
         }
 
-        if (vertex1Index == - 1) {
-            throw new VertexNotFound("The vertex " + vertex1 + " was not found in the graph");
-        }
-        if (vertex2Index == - 1) {
-            throw new VertexNotFound("The vertex " + vertex2 + " was not found in the Graph");
-        }
+        // if (vertex1Index == - 1) {
+        //     throw new VertexNotFound("The vertex " + vertex1 + " was not found in the graph");
+        // }
+        // if (vertex2Index == - 1) {
+        //     throw new VertexNotFound("The vertex " + vertex2 + " was not found in the Graph");
+        // }
 
-        return connections[vertex1Index][vertex2Index];
+        return connections[vertex1Index][vertex2Index].getPeso();
     } 
 
     /**
@@ -59,10 +59,8 @@ public class Graph {
      * @param vertex1
      * @param vertex2
      * @param weight
-     * @throws VertexNotFound When a vertex doesn't exist on the verteces list
-     * @throws BadAttributeValueExpException When the verteces are equal 
      */
-    public void setConnection(String vertex1, String vertex2, int weight) throws VertexNotFound, BadAttributeValueExpException{
+    public void setConnection(Node vertex1, Node vertex2, double weight) {
         int vertex1Index = - 1;
         int vertex2Index = - 1;
         for (int i = 0; i < verteces.length; i++) {
@@ -73,14 +71,14 @@ public class Graph {
                 vertex2Index = i;
         }
 
-        if (vertex1Index == - 1) 
-            throw new VertexNotFound("The vertex " + vertex1 + " was not found in the graph");
+        // if (vertex1Index == - 1) 
+        //     throw new VertexNotFound("The vertex " + vertex1 + " was not found in the graph");
         
-        if (vertex2Index == - 1) 
-            throw new VertexNotFound("The vertex " + vertex2 + " was not found in the Graph");
+        // if (vertex2Index == - 1) 
+        //     throw new VertexNotFound("The vertex " + vertex2 + " was not found in the Graph");
         
-        if (vertex1 == vertex2) 
-            throw new BadAttributeValueExpException("Loops are not allowed on the Graph vertex1 and vertex2 must be diferent");
+        // if (vertex1 == vertex2) 
+        //     throw new BadAttributeValueExpException("Loops are not allowed on the Graph vertex1 and vertex2 must be diferent");
         
         
         connect(vertex1Index, vertex2Index, weight);
@@ -94,18 +92,14 @@ public class Graph {
      * @param vertex2
      * @throws VertexNotFound When a vertex doesn't exist on the verteces list
      */
-    public void disableConnection(String vertex1, String vertex2) throws VertexNotFound {
-        try {
-            setConnection(vertex1, vertex2, 0);
-        } catch (BadAttributeValueExpException e) {
-            return;
-        }
-        
+    public void disableConnection(Node vertex1, Node vertex2) throws VertexNotFound {
+        setConnection(vertex1, vertex2, 0);
     }
 
-    private void connect(int x, int y, int weight) {
-        connections[x][y] = weight;
-        connections[y][x] = weight;
+    private void connect(int x, int y, double weight) {
+        Edge edge = new Edge(verteces[x], verteces[y], weight);
+        connections[x][y] = edge;
+        connections[y][x] = edge;
     }
 
 }

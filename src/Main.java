@@ -19,6 +19,6 @@ public class Main {
     e.printStackTrace(); 
     }   
         //invoca mas tarde la ventana principal 
-    SwingUtilities.invokeLater(VentanaPrincipal::new);
-     } 
+    // SwingUtilities.invokeLater(VentanaPrincipal::new);
+    } 
 }

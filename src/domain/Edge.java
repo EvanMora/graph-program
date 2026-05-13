@@ -1,9 +1,11 @@
-public class Arista{
-    private Nodo origen;
-    private Nodo destino;
+package domain;
+
+public class Edge{
+    private Node origen;
+    private Node destino;
     private double peso;
 
-    public Arista(Nodo origen , Nodo destino , double peso){
+    public Edge(Node origen , Node destino , double peso){
         this.origen=origen;
         this.destino=destino;
         this.peso=peso;
@@ -16,11 +18,11 @@ public class Arista{
     // getter accede 
     //setter modifica 
         //getter origen 
-    public Nodo getOrigen(){
+    public Node getOrigen(){
         return origen;
     }  
         //getter Destino
-    public Nodo getDestino(){
+    public Node getDestino(){
         return destino;
     }
         //getter Peso 
@@ -28,11 +30,11 @@ public class Arista{
         return peso;
     }
         //setter origen  
-    public void setOrigen(Nodo origen){
+    public void setOrigen(Node origen){
         this.origen = origen; 
     }
         //setter destino
-    public void setDestino(Nodo destino){
+    public void setDestino(Node destino){
         this.destino = destino;
 
     }

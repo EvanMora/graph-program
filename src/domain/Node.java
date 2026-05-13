@@ -1,10 +1,12 @@
-public class Nodo {
+package domain;
+
+public class Node {
     private int id;
     private String nombre;
     private int x;
     private int y; 
 
-    public Nodo(int id, String nombre, int x, int y){
+    public Node(int id, String nombre, int x, int y){
         this.id = id;
         this.nombre = nombre;
         this.x = x;

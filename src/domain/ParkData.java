@@ -2,14 +2,14 @@ package domain;
 
 public class ParkData {
     public Node[] parkArray = {
-        new Node(0, "UMB", 0, 0),
-        new Node(1, "Parque Nacional", 0, 0),
-        new Node(2, "Parque de la 93", 0, 0),
-        new Node(3, "Parque Simon Bolivar", 0, 0),
-        new Node(4, "Parque el Virrey", 0, 0),
-        new Node(5, "Parque el Tunal", 0, 0),
-        new Node(6, "Timiza", 0, 0),
-        new Node(7, "Mundo aventura", 0, 0)
+        new Node(0, "UMB", 200, 80),
+        new Node(1, "Parque Nacional", 300, 120),
+        new Node(2, "Parque de la 93", 50, 150),
+        new Node(3, "Parque Simon Bolivar", 180, 300),
+        new Node(4, "Parque el Virrey", 220, 450),
+        new Node(5, "Parque el Tunal", 350, 400),
+        new Node(6, "Timiza", 420, 300),
+        new Node(7, "Mundo aventura", 420, 150)
     };
     public Graph parkGraph = new Graph(parkArray); 
 

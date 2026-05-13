@@ -1,5 +1,8 @@
 package domain;
 
+import java.util.ArrayList;
+import java.util.Collections;
+
 public class Graph {
     private Node[] verteces;
     private Edge[][] connections; 
@@ -29,15 +32,8 @@ public class Graph {
      * @return The weight of the connection
      */
     public double getWeight(Node vertex1, Node vertex2){
-        int vertex1Index = - 1;
-        int vertex2Index = - 1;
-        for (int i = 0; i < verteces.length; i++) {
-            if (verteces[i] == vertex1) 
-                vertex1Index = i;
-
-            if (verteces[i] == vertex2)
-                vertex2Index = i;
-        }
+        int vertex1Index = getVertexIndex(vertex1);
+        int vertex2Index = getVertexIndex(vertex2);
 
         if (vertex1Index == - 1) {
             System.out.println("The vertex " + vertex1.getNombre() + " was not found in the graph");
@@ -51,6 +47,16 @@ public class Graph {
         return connections[vertex1Index][vertex2Index].getPeso();
     } 
 
+    private int getVertexIndex(Node vertex) {
+        for (int i = 0; i < verteces.length; i++) {
+            if (verteces[i] == vertex) {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
     /**
      * Set a connection between two verteces whit an 
      * specific weight
@@ -60,15 +66,8 @@ public class Graph {
      * @param weight
      */
     public void setConnection(Node vertex1, Node vertex2, double weight) {
-        int vertex1Index = - 1;
-        int vertex2Index = - 1;
-        for (int i = 0; i < verteces.length; i++) {
-            if (verteces[i] == vertex1) 
-                vertex1Index = i;
-
-            if (verteces[i] == vertex2)
-                vertex2Index = i;
-        }
+        int vertex1Index = getVertexIndex(vertex1);
+        int vertex2Index = getVertexIndex(vertex2);
 
         if (vertex1Index == - 1) {
             System.out.println("The vertex " + vertex1 + " was not found in the graph");
@@ -95,20 +94,13 @@ public class Graph {
      * @param vertex1
      * @param vertex2
      */
-    public void disableConnection(Node vertex1, Node vertex2) throws VertexNotFound {
+    public void disableConnection(Node vertex1, Node vertex2) {
         setConnection(vertex1, vertex2, 0);
     }
 
     public Edge getConnection(Node vertex1, Node vertex2) {
-        int vertex1Index = - 1;
-        int vertex2Index = - 1;
-        for (int i = 0; i < verteces.length; i++) {
-            if (verteces[i] == vertex1) 
-                vertex1Index = i;
-
-            if (verteces[i] == vertex2)
-                vertex2Index = i;
-        }
+        int vertex1Index = getVertexIndex(vertex1);
+        int vertex2Index = getVertexIndex(vertex2);
 
         if (vertex1Index == - 1) {
             System.out.println("The vertex " + vertex1 + " was not found in the graph");
@@ -129,4 +121,64 @@ public class Graph {
         connections[y][x] = edge;
     }
 
+    public Node[] bellmanFord(Node start, Node end) {
+        if (start == end) {
+            Node[] nodes = {start};
+            return nodes;
+        }
+        if (getConnection(start, end) != null) {
+            Node[] nodes = {start, end};
+            return nodes;
+        }
+
+        double[] distances = new double[verteces.length];
+        Node[] predecessors = new Node[verteces.length];
+
+        for (int i = 0; i < verteces.length; i++) {
+            distances[i] = Double.MAX_VALUE;
+        }
+
+        int startIndex = getVertexIndex(start);
+
+        distances[startIndex] = 0;
+
+        for (int k = 0; k < verteces.length - 1; k++) {
+            for (int i = 0; i < verteces.length; i++) {
+                for (int j = 0; j < verteces.length; j++) {
+                    Edge edge = connections[i][j];
+
+                    if (edge != null) {
+                        double newDistance = distances[i] + edge.getPeso();
+
+                        if (distances[i] != Double.MAX_VALUE && newDistance < distances[j]) {
+                            distances[j] = newDistance;
+                            predecessors[j] = verteces[i];
+                        }
+                    }
+                }
+            }
+        }
+
+        ArrayList<Node> path = new ArrayList<>();
+        Node current = end;
+
+        while (current != null) {
+            path.add(current);
+
+            if (current == start) {
+                break;
+            }
+
+            int currentIndex = getVertexIndex(current);
+            current = predecessors[currentIndex]; 
+        }
+
+        if (path.get(path.size() - 1) != start) {
+            return new Node[0];
+        } 
+
+        Collections.reverse(path);
+
+        return path.toArray(new Node[0]);
+    }
 }

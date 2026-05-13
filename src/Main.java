@@ -1,7 +1,7 @@
 //swing 
 import javax.swing.*;
 //utilidades
-import javax.swing.SwingUtilities;
+// import javax.swing.SwingUtilities;
 //flat
 import com.formdev.flatlaf.FlatDarkLaf;
 //main

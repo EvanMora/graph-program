@@ -25,8 +25,4 @@ public class ParkData {
         parkGraph.setConnection(parkArray[5], parkArray[0], 16);
         parkGraph.setConnection(parkArray[6], parkArray[7], 3.9);
     }
-
-    public static void main(String[] args) {
-        
-    }
 }

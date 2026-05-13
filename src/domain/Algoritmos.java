@@ -13,7 +13,6 @@ import java.util.Set;
 
 public final class Algoritmos {
 
-```
 public static final double INF = Double.MAX_VALUE / 2;
 
 private Algoritmos() {
@@ -238,6 +237,5 @@ private static boolean sonAdyacentes(Graph g, Node a, Node b) {
     Edge e = g.getConnection(a, b);
     return e != null && e.getPeso() > 0;
 }
-```
 
 }

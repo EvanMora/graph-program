@@ -1,4 +1,4 @@
-import domain.*;
+package domain;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,7 +28,6 @@ public class VentanaPrincipal extends JFrame {
         setVisible(true);
     }
 
-    // ── Layout ────────────────────────────────────────────────────────────────
 
     private void buildLayout() {
         setLayout(new BorderLayout(4, 0));
@@ -40,12 +39,10 @@ public class VentanaPrincipal extends JFrame {
         add(scroll, BorderLayout.EAST);
     }
 
-    // ── Menu bar ──────────────────────────────────────────────────────────────
 
     private void buildMenuBar() {
         JMenuBar bar = new JMenuBar();
 
-        // ── Algoritmos ──
         JMenu mAlg = new JMenu("Algoritmos");
 
         JMenuItem iDijkstra = new JMenuItem("Dijkstra (camino más corto)");
@@ -66,7 +63,6 @@ public class VentanaPrincipal extends JFrame {
         mAlg.add(iKruskal);  mAlg.addSeparator();
         mAlg.add(iBFS);      mAlg.add(iDFS);
 
-        // ── Edición ──
         JMenu mEd = new JMenu("Edición");
 
         JMenuItem iModoEd  = new JMenuItem("Modo Edición");
@@ -78,7 +74,6 @@ public class VentanaPrincipal extends JFrame {
         mEd.add(iModoEd);
         mEd.add(iModoExp);
 
-        // ── Ver ──
         JMenu mVer = new JMenu("Ver");
 
         JMenuItem iLimpiar = new JMenuItem("Limpiar resaltado");
@@ -90,8 +85,6 @@ public class VentanaPrincipal extends JFrame {
         bar.add(mVer);
         setJMenuBar(bar);
     }
-
-    // ── Algorithm dispatchers ─────────────────────────────────────────────────
 
     private void iniciarDijkstra() {
         mostrar("Dijkstra activado.\nHaz clic en el nodo ORIGEN en el grafo.");
@@ -169,7 +162,6 @@ public class VentanaPrincipal extends JFrame {
         panelGrafo.iniciarAlgoritmo(PanelGrafo.EstadoAlgoritmo.DFS_INICIO);
     }
 
-    // ── Output helpers ────────────────────────────────────────────────────────
 
     public void mostrarResultado(String titulo, String cuerpo) {
         areaTexto.setText("══════════════════════════\n" + titulo + "\n══════════════════════════\n\n" + cuerpo);
@@ -179,8 +171,6 @@ public class VentanaPrincipal extends JFrame {
     public void mostrar(String mensaje) {
         areaTexto.setText(mensaje);
     }
-
-    // ── Utility ───────────────────────────────────────────────────────────────
 
     private String abrev(String s, int max) {
         return s.length() <= max ? s : s.substring(0, max - 1) + "…";

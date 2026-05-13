@@ -1,4 +1,4 @@
-import domain.*;
+package domain;
 
 import javax.swing.*;
 import java.awt.*;
@@ -54,8 +54,6 @@ public class PanelGrafo extends JPanel implements MouseListener {
             }
     }
 
-    // ── Painting ─────────────────────────────────────────────────────────────
-
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -96,7 +94,6 @@ public class PanelGrafo extends JPanel implements MouseListener {
         }
         g2.drawLine(a.getX(), a.getY(), b.getX(), b.getY());
 
-        // Weight label at midpoint
         int mx = (a.getX() + b.getX()) / 2;
         int my = (a.getY() + b.getY()) / 2;
         g2.setFont(new Font("SansSerif", Font.PLAIN, 11));
@@ -111,27 +108,22 @@ public class PanelGrafo extends JPanel implements MouseListener {
     private void dibujarNodo(Graphics2D g2, Node nd, boolean seleccionado, boolean enCamino) {
         int x = nd.getX() - R, y = nd.getY() - R, d = R * 2;
 
-        // Shadow
         g2.setColor(new Color(0, 0, 0, 70));
         g2.fillOval(x + 3, y + 3, d, d);
 
-        // Fill
         g2.setColor(enCamino ? C_CAMINO : seleccionado ? C_SEL : C_NODO);
         g2.fillOval(x, y, d, d);
 
-        // Border
         g2.setColor(enCamino || seleccionado ? C_HIGHLIGHT : C_BORDE);
         g2.setStroke(new BasicStroke(2));
         g2.drawOval(x, y, d, d);
 
-        // ID inside
         g2.setColor(C_TEXTO);
         g2.setFont(new Font("SansSerif", Font.BOLD, 12));
         FontMetrics fm = g2.getFontMetrics();
         String id = String.valueOf(nd.getId());
         g2.drawString(id, nd.getX() - fm.stringWidth(id) / 2, nd.getY() + fm.getAscent() / 2 - 2);
 
-        // Name below with dark background
         g2.setFont(new Font("SansSerif", Font.PLAIN, 10));
         fm = g2.getFontMetrics();
         String nombre = nd.getNombre();
@@ -169,7 +161,6 @@ public class PanelGrafo extends JPanel implements MouseListener {
         }
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private Node nodoEnPosicion(int x, int y) {
         for (Node nd : nodos) {
@@ -186,8 +177,6 @@ public class PanelGrafo extends JPanel implements MouseListener {
             grafo.setConnection(e.getOrigen(), e.getDestino(), e.getPeso());
         repaint();
     }
-
-    // ── Public API for VentanaPrincipal ───────────────────────────────────────
 
     public Graph getGrafo() { return grafo; }
 
@@ -232,8 +221,6 @@ public class PanelGrafo extends JPanel implements MouseListener {
         caminoResaltado.clear();
         repaint();
     }
-
-    // ── Mouse events ──────────────────────────────────────────────────────────
 
     @Override
     public void mouseClicked(MouseEvent e) {
@@ -285,8 +272,6 @@ public class PanelGrafo extends JPanel implements MouseListener {
         }
     }
 
-    // ── Algorithm execution ───────────────────────────────────────────────────
-
     private void ejecutarDijkstra(Node origen, Node destino) {
         List<Node> camino = Algoritmos.dijkstra(grafo, origen, destino);
         if (camino.isEmpty()) {
@@ -328,8 +313,6 @@ public class PanelGrafo extends JPanel implements MouseListener {
         resaltarCamino(rec);
         ventana.mostrarResultado("DFS desde " + inicio, sb.toString());
     }
-
-    // ── Edit operations ───────────────────────────────────────────────────────
 
     private void crearNodo(int x, int y) {
         String nombre = JOptionPane.showInputDialog(this, "Nombre del nuevo nodo:", "Nuevo Nodo", JOptionPane.QUESTION_MESSAGE);

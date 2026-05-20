@@ -1,10 +1,10 @@
 package domain;
-
+//edge 
 public class Edge{
     private Node origen;
     private Node destino;
     private double peso;
-
+    //origen y detino 
     public Edge(Node origen , Node destino , double peso){
         this.origen=origen;
         this.destino=destino;

@@ -73,7 +73,6 @@ public class PanelGrafo extends JPanel implements MouseListener, MouseMotionList
             }
     }
 
-    // ──────────────────────── Pintura ────────────────────────
 
     @Override
     protected void paintComponent(Graphics g) {
@@ -253,7 +252,6 @@ public class PanelGrafo extends JPanel implements MouseListener, MouseMotionList
         }
     }
 
-    // ──────────────────────── Utilidades ─────────────────────
 
     private Node nodoEnPosicion(int x, int y) {
         for (Node nd : nodos) {
@@ -275,7 +273,6 @@ public class PanelGrafo extends JPanel implements MouseListener, MouseMotionList
     public Graph getGrafo()       { return grafo; }
     public List<Node> getNodos()  { return nodos; }
 
-    // ──────────────────────── Acciones públicas ───────────────
 
     public void setModoEdicion(boolean modo) {
         modoEdicion = modo;
@@ -328,7 +325,6 @@ public class PanelGrafo extends JPanel implements MouseListener, MouseMotionList
         reconstruirGrafo();
     }
 
-    // ──────────────────────── Mouse drag ─────────────────────
 
     @Override
     public void mousePressed(MouseEvent e) {
@@ -386,7 +382,6 @@ public class PanelGrafo extends JPanel implements MouseListener, MouseMotionList
     @Override
     public void mouseMoved(MouseEvent e) {}
 
-    // ──────────────────────── Mouse click ────────────────────
 
     @Override
     public void mouseClicked(MouseEvent e) {
@@ -441,7 +436,6 @@ public class PanelGrafo extends JPanel implements MouseListener, MouseMotionList
         }
     }
 
-    // ──────────────────────── Algoritmos ─────────────────────
 
     private void ejecutarDijkstra(Node origen, Node destino) {
         List<Node> camino = Algoritmos.dijkstra(grafo, origen, destino);
@@ -486,7 +480,6 @@ public class PanelGrafo extends JPanel implements MouseListener, MouseMotionList
         ventana.mostrarResultado("DFS desde " + inicio, sb.toString());
     }
 
-    // ──────────────────────── CRUD ───────────────────────────
 
     private void crearNodo(int x, int y) {
         String nombre = JOptionPane.showInputDialog(this,

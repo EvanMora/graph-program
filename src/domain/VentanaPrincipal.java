@@ -44,7 +44,6 @@ public class VentanaPrincipal extends JFrame {
         setVisible(true);
     }
 
-    // ──────────────────────── Layout ─────────────────────────
 
     private void buildLayout() {
         setLayout(new BorderLayout(0, 0));
@@ -214,7 +213,6 @@ public class VentanaPrincipal extends JFrame {
         return bar;
     }
 
-    // ──────────────────────── Helpers de UI ──────────────────
 
     private JPanel makeCard(String titulo) {
         JPanel card = new JPanel();
@@ -254,7 +252,6 @@ public class VentanaPrincipal extends JFrame {
         return btn;
     }
 
-    // ──────────────────────── Menú ───────────────────────────
 
     private void buildMenuBar() {
         JMenuBar bar = new JMenuBar();
@@ -288,7 +285,6 @@ public class VentanaPrincipal extends JFrame {
         menu.add(item);
     }
 
-    // ──────────────────────── Combos ─────────────────────────
 
     public void actualizarCombosNodos() {
         if (cbOrigen == null || cbDestino == null) return;
@@ -341,7 +337,6 @@ public class VentanaPrincipal extends JFrame {
         }
     }
 
-    // ──────────────────────── Algoritmos ─────────────────────
 
     private void iniciarDijkstra() {
         mostrar("Dijkstra activado.\nHaz clic en el nodo ORIGEN en el grafo.");
@@ -408,7 +403,6 @@ public class VentanaPrincipal extends JFrame {
         panelGrafo.iniciarAlgoritmo(PanelGrafo.EstadoAlgoritmo.DFS_INICIO);
     }
 
-    // ──────────────────────── Mensajes ───────────────────────
 
     public void mostrarResultado(String titulo, String cuerpo) {
         areaTexto.setText("══════════════════════\n" + titulo
@@ -424,7 +418,6 @@ public class VentanaPrincipal extends JFrame {
         return s.length() <= max ? s : s.substring(0, max - 1) + "…";
     }
 
-    // ──────────────────────── RoundedBorder ──────────────────
 
     private static class RoundedBorder implements Border {
         private final Color color;

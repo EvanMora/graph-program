@@ -1,5 +1,6 @@
 package domain;
 
+import java.util.Collections;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -232,6 +233,67 @@ public static double[][] floydWarshall(Graph g) {
     }
     return dist;
 }
+    public ArrayList<Node> bellmanFord(Graph g, Node start, Node end) {
+        if (start == end) {
+            ArrayList<Node> nodes = new ArrayList<>();
+            nodes.add(start);
+            return nodes;
+        }
+        if (g.getConnection(start, end) != null) {
+            ArrayList<Node> nodes = new ArrayList<>();
+            return nodes;
+        }
+
+        double[] distances = new double[g.getVerteces().length];
+        Node[] predecessors = new Node[g.getVerteces().length];
+
+        for (int i = 0; i < g.getVerteces().length; i++) {
+            distances[i] = Double.MAX_VALUE;
+        }
+
+        int startIndex = g.getVertexIndex(start);
+
+        distances[startIndex] = 0;
+
+        for (int k = 0; k < g.getVerteces().length - 1; k++) {
+            for (int i = 0; i < g.getVerteces().length; i++) {
+                for (int j = 0; j < g.getVerteces().length; j++) {
+                    Edge edge = g.getConnections()[i][j];
+
+                    if (edge != null) {
+                        double newDistance = distances[i] + edge.getPeso();
+
+                        if (distances[i] != Double.MAX_VALUE && newDistance < distances[j]) {
+                            distances[j] = newDistance;
+                            predecessors[j] = g.getVerteces()[i];
+                        }
+                    }
+                }
+            }
+        }
+
+        ArrayList<Node> path = new ArrayList<>();
+        Node current = end;
+
+        while (current != null) {
+            path.add(current);
+
+            if (current == start) {
+                break;
+            }
+
+            int currentIndex = g.getVertexIndex(current);
+            current = predecessors[currentIndex]; 
+        }
+
+        if (path.get(path.size() - 1) != start) {
+            return new ArrayList<>();
+        } 
+
+        Collections.reverse(path);
+
+        return path;
+    }
 
 private static boolean sonAdyacentes(Graph g, Node a, Node b) {
     Edge e = g.getConnection(a, b);

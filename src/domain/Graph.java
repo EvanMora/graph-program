@@ -24,6 +24,10 @@ public class Graph {
         return verteces;
     }
 
+    public Edge[][] getConnections() {
+        return connections;
+    }
+
     /**
      * Gives the weight of a connection between
      * two verteces
@@ -48,7 +52,7 @@ public class Graph {
         return connections[vertex1Index][vertex2Index].getPeso();
     } 
 
-    private int getVertexIndex(Node vertex) {
+    public int getVertexIndex(Node vertex) {
         for (int i = 0; i < verteces.length; i++) {
             if (verteces[i] == vertex) {
                 return i;

@@ -99,6 +99,7 @@ public class Graph {
         setConnection(vertex1, vertex2, 0);
     }
 
+    /* Return de edge that conects vertex1 and vertex2 */
     public Edge getConnection(Node vertex1, Node vertex2) {
         int vertex1Index = getVertexIndex(vertex1);
         int vertex2Index = getVertexIndex(vertex2);
@@ -122,6 +123,7 @@ public class Graph {
         connections[y][x] = edge;
     }
 
+    /* Calculate the shortest way and negative weights are allowed */
     public Node[] bellmanFord(Node start, Node end) {
         if (start == end) {
             Node[] nodes = {start};

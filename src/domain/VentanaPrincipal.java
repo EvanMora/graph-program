@@ -160,7 +160,9 @@ public class VentanaPrincipal extends JFrame {
         lbl.setForeground(TEXT_DIM);
         bar.add(lbl);
 
+        // Agregado el botón de Bellman-Ford manteniendo la distribución visual uniforme
         bar.add(makeAlgoBtn("⬦ Dijkstra",       new Color( 67, 97, 238), e -> iniciarDijkstra()));
+        bar.add(makeAlgoBtn("⬦ Bellman-Ford",    new Color( 38, 70, 180), e -> iniciarBellmanFord()));
         bar.add(makeAlgoBtn("◉ BFS",             new Color( 47,168, 104), e -> iniciarBFS()));
         bar.add(makeAlgoBtn("◎ DFS",             new Color( 30,160, 160), e -> iniciarDFS()));
         bar.add(algoSep());
@@ -258,6 +260,7 @@ public class VentanaPrincipal extends JFrame {
 
         JMenu mAlg = new JMenu("Algoritmos");
         addMenuItem(mAlg, "Dijkstra (camino más corto)",       e -> iniciarDijkstra());
+        addMenuItem(mAlg, "Bellman-Ford (camino alternativo)",   e -> iniciarBellmanFord()); // Agregado al menú desplegable
         addMenuItem(mAlg, "Prim (MST)",                        e -> ejecutarPrim());
         addMenuItem(mAlg, "Floyd-Warshall (todos los pares)",  e -> ejecutarFloydWarshall());
         addMenuItem(mAlg, "Kruskal (MST)",                     e -> ejecutarKruskal());
@@ -341,6 +344,12 @@ public class VentanaPrincipal extends JFrame {
     private void iniciarDijkstra() {
         mostrar("Dijkstra activado.\nHaz clic en el nodo ORIGEN en el grafo.");
         panelGrafo.iniciarAlgoritmo(PanelGrafo.EstadoAlgoritmo.DIJKSTRA_ORIGEN);
+    }
+
+    // Nuevo método para disparar el flujo interactivo de Bellman-Ford
+    private void iniciarBellmanFord() {
+        mostrar("Bellman-Ford activado.\nHaz clic en el nodo ORIGEN en el grafo.");
+        panelGrafo.iniciarAlgoritmo(PanelGrafo.EstadoAlgoritmo.BELLMAN_FORD_ORIGEN);
     }
 
     private void ejecutarPrim() {

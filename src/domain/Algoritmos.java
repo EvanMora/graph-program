@@ -233,7 +233,7 @@ public static double[][] floydWarshall(Graph g) {
     }
     return dist;
 }
-    public ArrayList<Node> bellmanFord(Graph g, Node start, Node end) {
+    public static ArrayList<Node> bellmanFord(Graph g, Node start, Node end) {
         if (start == end) {
             ArrayList<Node> nodes = new ArrayList<>();
             nodes.add(start);

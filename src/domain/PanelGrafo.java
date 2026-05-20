@@ -3,10 +3,11 @@ package domain;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.*;
 import java.util.*;
 import java.util.List;
 
-public class PanelGrafo extends JPanel implements MouseListener {
+public class PanelGrafo extends JPanel implements MouseListener, MouseMotionListener {
 
     public enum EstadoAlgoritmo {
         NINGUNO, DIJKSTRA_ORIGEN, DIJKSTRA_DESTINO, BFS_INICIO, DFS_INICIO
@@ -24,27 +25,45 @@ public class PanelGrafo extends JPanel implements MouseListener {
     private boolean modoEdicion = false;
     private EstadoAlgoritmo estado = EstadoAlgoritmo.NINGUNO;
 
-    private static final int R = 25;
-    private static final Color C_NODO      = new Color(52, 101, 164);
-    private static final Color C_BORDE     = new Color(114, 159, 207);
-    private static final Color C_SEL       = new Color(245, 121, 0);
-    private static final Color C_CAMINO    = new Color(255, 200, 0);
-    private static final Color C_ARISTA    = new Color(100, 100, 110);
-    private static final Color C_HIGHLIGHT = new Color(252, 132, 0);
-    private static final Color C_TEXTO     = Color.WHITE;
+    // Drag state
+    private Node dragCandidate  = null;
+    private Node nodeArrastrado = null;
+    private int  dragOffsetX, dragOffsetY;
+    private int  prevDragX, prevDragY;
+    // pesos originales al inicio del arrastre (para escalar en tiempo real)
+    private final Map<Edge, Double> originalPesos = new HashMap<>();
+
+    private static final int R = 28;
+
+    // Paleta de colores
+    private static final Color C_BG          = new Color(13, 17, 30);
+    private static final Color C_GRID_LINE   = new Color(25, 32, 55);
+    private static final Color C_GRID_DOT    = new Color(40, 52, 88);
+    private static final Color C_NODO_TOP    = new Color(79, 109, 245);
+    private static final Color C_NODO_BOT    = new Color(50,  75, 200);
+    private static final Color C_BORDE       = new Color(120, 150, 255);
+    private static final Color C_SEL_TOP     = new Color(255, 140,  30);
+    private static final Color C_SEL_BOT     = new Color(220,  95,   0);
+    private static final Color C_PATH_TOP    = new Color( 80, 210, 140);
+    private static final Color C_PATH_BOT    = new Color( 45, 160, 100);
+    private static final Color C_ARISTA      = new Color( 55,  70, 110);
+    private static final Color C_HIGHLIGHT   = new Color(255, 140,  30);
+    private static final Color C_PESO_BG     = new Color( 18,  24,  45, 210);
+    private static final Color C_TEXTO       = Color.WHITE;
 
     public PanelGrafo(VentanaPrincipal ventana) {
         this.ventana = ventana;
-        setBackground(new Color(28, 28, 36));
-        setPreferredSize(new Dimension(780, 680));
+        setBackground(C_BG);
+        setPreferredSize(new Dimension(820, 700));
         addMouseListener(this);
+        addMouseMotionListener(this);
         cargarDatos();
     }
 
     private void cargarDatos() {
         ParkData data = new ParkData();
         nodos = new ArrayList<>(Arrays.asList(data.parkArray));
-        grafo = data.parkGraph;
+        grafo  = data.parkGraph;
         aristas = new ArrayList<>();
         Node[] verts = grafo.getVerteces();
         for (int i = 0; i < verts.length; i++)
@@ -54,12 +73,17 @@ public class PanelGrafo extends JPanel implements MouseListener {
             }
     }
 
+    // ──────────────────────── Pintura ────────────────────────
+
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,      RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        g2.setRenderingHint(RenderingHints.KEY_RENDERING,         RenderingHints.VALUE_RENDER_QUALITY);
+
+        dibujarGrid(g2);
 
         for (Edge e : aristas)
             dibujarArista(g2, e, esResaltada(e));
@@ -72,9 +96,22 @@ public class PanelGrafo extends JPanel implements MouseListener {
         dibujarEstado(g2);
     }
 
+    private void dibujarGrid(Graphics2D g2) {
+        int step = 45;
+        g2.setColor(C_GRID_LINE);
+        g2.setStroke(new BasicStroke(0.5f));
+        for (int x = 0; x < getWidth();  x += step) g2.drawLine(x, 0, x, getHeight());
+        for (int y = 0; y < getHeight(); y += step) g2.drawLine(0, y, getWidth(), y);
+
+        g2.setColor(C_GRID_DOT);
+        for (int x = 0; x < getWidth(); x += step)
+            for (int y = 0; y < getHeight(); y += step)
+                g2.fillOval(x - 2, y - 2, 4, 4);
+    }
+
     private boolean esResaltada(Edge e) {
         if (aristasResaltadas.contains(e)) return true;
-        if (caminoResaltado.size() < 2) return false;
+        if (caminoResaltado.size() < 2)   return false;
         for (int i = 0; i < caminoResaltado.size() - 1; i++) {
             Node a = caminoResaltado.get(i), b = caminoResaltado.get(i + 1);
             if ((e.getOrigen() == a && e.getDestino() == b)
@@ -85,82 +122,138 @@ public class PanelGrafo extends JPanel implements MouseListener {
 
     private void dibujarArista(Graphics2D g2, Edge e, boolean resaltada) {
         Node a = e.getOrigen(), b = e.getDestino();
+
         if (resaltada) {
+            // Resplandor naranja
+            g2.setColor(new Color(255, 140, 30, 35));
+            g2.setStroke(new BasicStroke(12f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            g2.drawLine(a.getX(), a.getY(), b.getX(), b.getY());
             g2.setColor(C_HIGHLIGHT);
-            g2.setStroke(new BasicStroke(3.5f));
+            g2.setStroke(new BasicStroke(3.2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
         } else {
             g2.setColor(C_ARISTA);
-            g2.setStroke(new BasicStroke(1.5f));
+            float[] dash = {9f, 6f};
+            g2.setStroke(new BasicStroke(1.6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 10f, dash, 0f));
         }
         g2.drawLine(a.getX(), a.getY(), b.getX(), b.getY());
 
+        // Etiqueta de peso
         int mx = (a.getX() + b.getX()) / 2;
         int my = (a.getY() + b.getY()) / 2;
-        g2.setFont(new Font("SansSerif", Font.PLAIN, 11));
-        String label = String.format("%.1f", e.getPeso());
+        g2.setFont(new Font("SansSerif", Font.BOLD, 11));
+        String label = String.format("%.1f km", e.getPeso());
         FontMetrics fm = g2.getFontMetrics();
-        g2.setColor(new Color(0, 0, 0, 140));
-        g2.fillRoundRect(mx - fm.stringWidth(label) / 2 - 2, my - fm.getAscent(), fm.stringWidth(label) + 4, fm.getHeight(), 4, 4);
-        g2.setColor(resaltada ? C_HIGHLIGHT : new Color(190, 190, 190));
-        g2.drawString(label, mx - fm.stringWidth(label) / 2, my);
+        int lw = fm.stringWidth(label);
+        int lh = fm.getHeight();
+
+        g2.setColor(C_PESO_BG);
+        g2.fillRoundRect(mx - lw / 2 - 5, my - fm.getAscent() - 3, lw + 10, lh + 2, 7, 7);
+
+        g2.setColor(resaltada ? new Color(255, 195, 100) : new Color(150, 175, 230));
+        g2.drawString(label, mx - lw / 2, my);
     }
 
     private void dibujarNodo(Graphics2D g2, Node nd, boolean seleccionado, boolean enCamino) {
-        int x = nd.getX() - R, y = nd.getY() - R, d = R * 2;
+        int x = nd.getX(), y = nd.getY(), d = R * 2;
 
-        g2.setColor(new Color(0, 0, 0, 70));
-        g2.fillOval(x + 3, y + 3, d, d);
+        // Sombra
+        g2.setColor(new Color(0, 0, 0, 90));
+        g2.fillOval(x - R + 4, y - R + 4, d, d);
 
-        g2.setColor(enCamino ? C_CAMINO : seleccionado ? C_SEL : C_NODO);
-        g2.fillOval(x, y, d, d);
+        // Resplandor para nodos seleccionados / en camino
+        if (seleccionado || enCamino) {
+            Color glow = enCamino
+                ? new Color(80, 210, 140, 55)
+                : new Color(255, 140, 30, 55);
+            g2.setColor(glow);
+            g2.fillOval(x - R - 8, y - R - 8, d + 16, d + 16);
+        }
 
-        g2.setColor(enCamino || seleccionado ? C_HIGHLIGHT : C_BORDE);
-        g2.setStroke(new BasicStroke(2));
-        g2.drawOval(x, y, d, d);
+        // Relleno degradado
+        Color top = enCamino ? C_PATH_TOP : seleccionado ? C_SEL_TOP : C_NODO_TOP;
+        Color bot = enCamino ? C_PATH_BOT : seleccionado ? C_SEL_BOT : C_NODO_BOT;
+        g2.setPaint(new GradientPaint(x - R, y - R, top, x + R, y + R, bot));
+        g2.fillOval(x - R, y - R, d, d);
 
+        // Borde
+        Color borde = enCamino
+            ? new Color(110, 245, 165)
+            : seleccionado
+                ? new Color(255, 185, 80)
+                : C_BORDE;
+        g2.setColor(borde);
+        g2.setStroke(new BasicStroke(2f));
+        g2.drawOval(x - R, y - R, d, d);
+
+        // Brillo (efecto glassy)
+        g2.setColor(new Color(255, 255, 255, 45));
+        g2.fillOval(x - R + 5, y - R + 4, d / 2, d / 3);
+
+        // ID del nodo
         g2.setColor(C_TEXTO);
-        g2.setFont(new Font("SansSerif", Font.BOLD, 12));
+        g2.setFont(new Font("SansSerif", Font.BOLD, 13));
         FontMetrics fm = g2.getFontMetrics();
         String id = String.valueOf(nd.getId());
-        g2.drawString(id, nd.getX() - fm.stringWidth(id) / 2, nd.getY() + fm.getAscent() / 2 - 2);
+        g2.drawString(id, x - fm.stringWidth(id) / 2, y + fm.getAscent() / 2 - 1);
 
+        // Nombre debajo
         g2.setFont(new Font("SansSerif", Font.PLAIN, 10));
         fm = g2.getFontMetrics();
         String nombre = nd.getNombre();
-        if (fm.stringWidth(nombre) > 90) nombre = nombre.substring(0, 10) + "…";
-        int tx = nd.getX() - fm.stringWidth(nombre) / 2;
-        int ty = nd.getY() + R + fm.getAscent() + 3;
-        g2.setColor(new Color(0, 0, 0, 150));
-        g2.fillRoundRect(tx - 2, ty - fm.getAscent(), fm.stringWidth(nombre) + 4, fm.getHeight() + 1, 3, 3);
-        g2.setColor(enCamino ? C_CAMINO : C_TEXTO);
+        if (fm.stringWidth(nombre) > 105) nombre = nombre.substring(0, 11) + "…";
+        int tx = x - fm.stringWidth(nombre) / 2;
+        int ty = y + R + fm.getAscent() + 5;
+
+        g2.setColor(new Color(0, 0, 0, 170));
+        g2.fillRoundRect(tx - 3, ty - fm.getAscent() - 1, fm.stringWidth(nombre) + 6, fm.getHeight() + 2, 5, 5);
+        g2.setColor(enCamino ? new Color(160, 255, 190) : C_TEXTO);
         g2.drawString(nombre, tx, ty);
     }
 
     private void dibujarEstado(Graphics2D g2) {
-        g2.setFont(new Font("SansSerif", Font.BOLD, 12));
-        String modo = modoEdicion ? "✎ MODO EDICIÓN" : "⬡ MODO EXPLORACIÓN";
-        g2.setColor(new Color(0, 0, 0, 120));
-        g2.fillRoundRect(6, 6, 200, 20, 6, 6);
-        g2.setColor(modoEdicion ? new Color(252, 175, 62) : new Color(114, 159, 207));
-        g2.drawString(modo, 10, 21);
+        // Píldora de modo (arriba a la derecha)
+        String modoTxt = modoEdicion ? "✎  EDICIÓN" : "⬡  EXPLORACIÓN";
+        Color modeColor = modoEdicion ? new Color(255, 140, 30) : new Color(80, 210, 140);
 
+        g2.setFont(new Font("SansSerif", Font.BOLD, 12));
+        FontMetrics fm = g2.getFontMetrics();
+        int pw = fm.stringWidth(modoTxt) + 22;
+        int ph = 26;
+        int px = getWidth() - pw - 12;
+        int py = 12;
+
+        g2.setColor(new Color(modeColor.getRed(), modeColor.getGreen(), modeColor.getBlue(), 28));
+        g2.fillRoundRect(px - 3, py - 3, pw + 6, ph + 6, 18, 18);
+        g2.setColor(new Color(modeColor.getRed(), modeColor.getGreen(), modeColor.getBlue(), 110));
+        g2.fillRoundRect(px, py, pw, ph, 14, 14);
+        g2.setColor(modeColor);
+        g2.setStroke(new BasicStroke(1.5f));
+        g2.drawRoundRect(px, py, pw, ph, 14, 14);
+        g2.drawString(modoTxt, px + 11, py + ph - 7);
+
+        // Pista de algoritmo (arriba a la izquierda)
         if (estado != EstadoAlgoritmo.NINGUNO) {
             String hint = switch (estado) {
                 case DIJKSTRA_ORIGEN  -> "Clic en nodo ORIGEN";
-                case DIJKSTRA_DESTINO -> "Clic en nodo DESTINO  (origen: " + origenSeleccionado + ")";
-                case BFS_INICIO       -> "Clic en nodo de INICIO (BFS)";
-                case DFS_INICIO       -> "Clic en nodo de INICIO (DFS)";
+                case DIJKSTRA_DESTINO -> "Origen: " + origenSeleccionado + "  •  Clic en DESTINO";
+                case BFS_INICIO       -> "Clic en nodo de INICIO  (BFS)";
+                case DFS_INICIO       -> "Clic en nodo de INICIO  (DFS)";
                 default               -> "";
             };
             g2.setFont(new Font("SansSerif", Font.PLAIN, 11));
-            FontMetrics fm = g2.getFontMetrics();
-            g2.setColor(new Color(0, 0, 0, 130));
-            g2.fillRoundRect(6, 30, fm.stringWidth(hint) + 8, 18, 5, 5);
-            g2.setColor(new Color(238, 238, 236));
-            g2.drawString(hint, 10, 43);
+            fm = g2.getFontMetrics();
+            int hw = fm.stringWidth(hint) + 18;
+            g2.setColor(new Color(20, 28, 55, 225));
+            g2.fillRoundRect(10, 12, hw, 26, 10, 10);
+            g2.setColor(new Color(120, 160, 255));
+            g2.setStroke(new BasicStroke(1f));
+            g2.drawRoundRect(10, 12, hw, 26, 10, 10);
+            g2.setColor(Color.WHITE);
+            g2.drawString(hint, 19, 29);
         }
     }
 
+    // ──────────────────────── Utilidades ─────────────────────
 
     private Node nodoEnPosicion(int x, int y) {
         for (Node nd : nodos) {
@@ -175,10 +268,14 @@ public class PanelGrafo extends JPanel implements MouseListener {
         grafo = new Graph(arr);
         for (Edge e : aristas)
             grafo.setConnection(e.getOrigen(), e.getDestino(), e.getPeso());
+        ventana.actualizarCombosNodos();
         repaint();
     }
 
-    public Graph getGrafo() { return grafo; }
+    public Graph getGrafo()       { return grafo; }
+    public List<Node> getNodos()  { return nodos; }
+
+    // ──────────────────────── Acciones públicas ───────────────
 
     public void setModoEdicion(boolean modo) {
         modoEdicion = modo;
@@ -187,9 +284,10 @@ public class PanelGrafo extends JPanel implements MouseListener {
         nodoParaArista = null;
         repaint();
         ventana.mostrar(modo
-            ? "Modo edición: clic en espacio vacío → nuevo nodo\n"
-              + "Clic en nodo → seleccionar para arista\n"
-              + "Clic derecho en nodo → eliminar"
+            ? "Modo edición:\n• Clic en espacio vacío → nuevo nodo\n"
+              + "• Clic en nodo → seleccionar para arista\n"
+              + "• Arrastrar nodo → mover (km se actualizan)\n"
+              + "• Clic derecho → eliminar nodo"
             : "Modo exploración activado.");
     }
 
@@ -222,8 +320,78 @@ public class PanelGrafo extends JPanel implements MouseListener {
         repaint();
     }
 
+    public void agregarArista(Node a, Node b, double peso) {
+        aristas.removeIf(e ->
+            (e.getOrigen() == a && e.getDestino() == b) ||
+            (e.getOrigen() == b && e.getDestino() == a));
+        aristas.add(new Edge(a, b, peso));
+        reconstruirGrafo();
+    }
+
+    // ──────────────────────── Mouse drag ─────────────────────
+
+    @Override
+    public void mousePressed(MouseEvent e) {
+        if (!modoEdicion || !SwingUtilities.isLeftMouseButton(e)) return;
+        Node clicked = nodoEnPosicion(e.getX(), e.getY());
+        if (clicked == null) return;
+
+        dragCandidate = clicked;
+        dragOffsetX   = e.getX() - clicked.getX();
+        dragOffsetY   = e.getY() - clicked.getY();
+        prevDragX     = clicked.getX();
+        prevDragY     = clicked.getY();
+
+        // Capturar pesos originales de las aristas conectadas
+        originalPesos.clear();
+        for (Edge edge : aristas)
+            if (edge.getOrigen() == clicked || edge.getDestino() == clicked)
+                originalPesos.put(edge, edge.getPeso());
+    }
+
+    @Override
+    public void mouseDragged(MouseEvent e) {
+        if (dragCandidate == null || !modoEdicion) return;
+        nodeArrastrado = dragCandidate;
+
+        int nx = Math.max(R + 5, Math.min(getWidth()  - R - 5,  e.getX() - dragOffsetX));
+        int ny = Math.max(R + 5, Math.min(getHeight() - R - 30, e.getY() - dragOffsetY));
+        nodeArrastrado.setX(nx);
+        nodeArrastrado.setY(ny);
+
+        // Actualizar pesos EN TIEMPO REAL según la distancia al punto de origen del arrastre
+        for (Edge edge : aristas) {
+            if (edge.getOrigen()  != nodeArrastrado && edge.getDestino() != nodeArrastrado) continue;
+            Double pesoOrig = originalPesos.get(edge);
+            if (pesoOrig == null) continue;
+            Node other    = (edge.getOrigen() == nodeArrastrado) ? edge.getDestino() : edge.getOrigen();
+            double distOrig = Math.hypot(prevDragX - other.getX(), prevDragY - other.getY());
+            double distNow  = Math.hypot(nx - other.getX(), ny - other.getY());
+            if (distOrig > 0.5)
+                edge.setPeso(Math.max(0.1, Math.round(pesoOrig * (distNow / distOrig) * 10.0) / 10.0));
+        }
+        repaint();
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+        if (nodeArrastrado != null) {
+            reconstruirGrafo();   // sincroniza el grafo con los pesos finales
+            nodeArrastrado = null;
+        }
+        dragCandidate = null;
+        originalPesos.clear();
+    }
+
+    @Override
+    public void mouseMoved(MouseEvent e) {}
+
+    // ──────────────────────── Mouse click ────────────────────
+
     @Override
     public void mouseClicked(MouseEvent e) {
+        // mouseClicked no se dispara si hubo movimiento (drag), así que es seguro procesarlo
+        if (nodeArrastrado != null) return;
         int x = e.getX(), y = e.getY();
         Node clicked = nodoEnPosicion(x, y);
         if (modoEdicion) handleEditClick(e, x, y, clicked);
@@ -247,7 +415,7 @@ public class PanelGrafo extends JPanel implements MouseListener {
             }
             case BFS_INICIO -> { ejecutarBFS(clicked); estado = EstadoAlgoritmo.NINGUNO; }
             case DFS_INICIO -> { ejecutarDFS(clicked); estado = EstadoAlgoritmo.NINGUNO; }
-            default -> { /* nothing */ }
+            default -> {}
         }
     }
 
@@ -260,7 +428,8 @@ public class PanelGrafo extends JPanel implements MouseListener {
             crearNodo(x, y);
         } else if (nodoParaArista == null) {
             nodoParaArista = clicked;
-            ventana.mostrar("Seleccionado: " + clicked.getNombre() + "\nClic en otro nodo para crear arista.");
+            ventana.mostrar("Seleccionado: " + clicked.getNombre()
+                + "\nClic en otro nodo para crear arista.");
             repaint();
         } else if (nodoParaArista == clicked) {
             nodoParaArista = null;
@@ -272,10 +441,13 @@ public class PanelGrafo extends JPanel implements MouseListener {
         }
     }
 
+    // ──────────────────────── Algoritmos ─────────────────────
+
     private void ejecutarDijkstra(Node origen, Node destino) {
         List<Node> camino = Algoritmos.dijkstra(grafo, origen, destino);
         if (camino.isEmpty()) {
-            ventana.mostrarResultado("Dijkstra", "No existe camino entre " + origen + " y " + destino + ".");
+            ventana.mostrarResultado("Dijkstra",
+                "No existe camino entre " + origen + " y " + destino + ".");
             return;
         }
         double total = 0;
@@ -287,7 +459,7 @@ public class PanelGrafo extends JPanel implements MouseListener {
             if (i > 0) sb.append(" → ");
             sb.append(camino.get(i).getNombre());
         }
-        sb.append(String.format("\n\nDistancia total: %.2f Km", total));
+        sb.append(String.format("\n\nDistancia total: %.2f km", total));
         resaltarCamino(camino);
         ventana.mostrarResultado("Dijkstra  " + origen + " → " + destino, sb.toString());
     }
@@ -314,25 +486,27 @@ public class PanelGrafo extends JPanel implements MouseListener {
         ventana.mostrarResultado("DFS desde " + inicio, sb.toString());
     }
 
+    // ──────────────────────── CRUD ───────────────────────────
+
     private void crearNodo(int x, int y) {
-        String nombre = JOptionPane.showInputDialog(this, "Nombre del nuevo nodo:", "Nuevo Nodo", JOptionPane.QUESTION_MESSAGE);
+        String nombre = JOptionPane.showInputDialog(this,
+            "Nombre del nuevo nodo:", "Nuevo Nodo", JOptionPane.QUESTION_MESSAGE);
         if (nombre == null || nombre.trim().isEmpty()) return;
-        Node nuevo = new Node(nodos.size(), nombre.trim(), x, y);
-        nodos.add(nuevo);
+        nodos.add(new Node(nodos.size(), nombre.trim(), x, y));
         reconstruirGrafo();
         ventana.mostrar("Nodo creado: " + nombre.trim());
     }
 
     private void crearArista(Node a, Node b) {
         String input = JOptionPane.showInputDialog(this,
-            "Distancia entre " + a + " y " + b + " (Km):", "Nueva Arista", JOptionPane.QUESTION_MESSAGE);
+            "Distancia entre " + a + " y " + b + " (km):",
+            "Nueva Arista", JOptionPane.QUESTION_MESSAGE);
         if (input == null || input.trim().isEmpty()) { repaint(); return; }
         try {
             double peso = Double.parseDouble(input.trim().replace(",", "."));
             if (peso <= 0) { JOptionPane.showMessageDialog(this, "La distancia debe ser positiva."); return; }
-            aristas.add(new Edge(a, b, peso));
-            reconstruirGrafo();
-            ventana.mostrar("Arista creada: " + a + " ↔ " + b + " = " + peso + " Km");
+            agregarArista(a, b, peso);
+            ventana.mostrar("Arista creada: " + a + " ↔ " + b + " = " + peso + " km");
         } catch (NumberFormatException ex) {
             JOptionPane.showMessageDialog(this, "Ingresa un número válido.", "Error", JOptionPane.ERROR_MESSAGE);
         }
@@ -349,9 +523,6 @@ public class PanelGrafo extends JPanel implements MouseListener {
         ventana.mostrar("Nodo eliminado: " + nd.getNombre());
     }
 
-    @Override public void mousePressed(MouseEvent e)  {}
-    @Override public void mouseReleased(MouseEvent e) {}
-    @Override public void mouseEntered(MouseEvent e)  {}
-    @Override public void mouseExited(MouseEvent e)   {}
+    @Override public void mouseEntered(MouseEvent e) {}
+    @Override public void mouseExited(MouseEvent e)  {}
 }
-
